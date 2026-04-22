@@ -6,11 +6,12 @@ import os
 class Config:
     
     # Data
-    data_dir:           str = "../data"    
+    data_dir:           str = "./data"    
     # data_dir:           str = "./data" #Kaggle
-    train_dir:          str = ""
-    val_dir:            str = ""
-    
+    train_dir:          str = "./data/final_data/train"
+    val_dir:            str = "./data/final_data/val"
+    test_dir:           str = "./data/cars_test"
+    num_workers:        int   = 4 
     img_size:           int = 224
     batch_size:         int = 32
     num_classes:        int = 196
@@ -51,19 +52,6 @@ class Config:
     seed:               int   = 42
     log_interval:       int   = 50 
     
-    def __post_init__(self):
-        # Tự động gán đường dẫn dựa trên data_dir
-        self.train_dir = os.path.join(self.data_dir, "train")
-        self.val_dir   = os.path.join(self.data_dir, "val")
-        
-        # Tạo folder output và folder dữ liệu nếu chưa có
-        Path(self.output_dir).mkdir(parents=True, exist_ok=True)
-        
-        # Kiểm tra sự tồn tại của dữ liệu
-        if not os.path.exists(self.train_dir):
-            print(f"[WARNING] Can't find train path: {os.path.abspath(self.train_dir)}")
-        else:
-            print(f"[INFO] Data found at: {os.path.abspath(self.data_dir)}")
         
 CFG = Config()
 
