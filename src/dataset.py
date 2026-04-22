@@ -46,7 +46,7 @@ def get_val_transform() -> T.Compose:
         ),
     ])
     
-def get_dataloader() -> Tuple[DataLoader, DataLoader, DataLoader]:
+def get_dataloader() -> Tuple[DataLoader, DataLoader]:
     print("[Dataset] Car Classification")
     
     train_dataset = ImageFolder(
@@ -61,7 +61,6 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader, DataLoader]:
     
     idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
     
-    # Lưu class names vào file json nếu cần (như trong Config bạn dự định)
     with open(CFG.class_names_path, 'w', encoding='utf-8') as f:
         json.dump(idx_to_class, f, indent=4)
         
