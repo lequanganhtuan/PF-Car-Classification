@@ -21,6 +21,3 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
-
-# Config riêng
-config_local.py
