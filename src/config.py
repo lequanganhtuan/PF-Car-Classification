@@ -2,15 +2,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import os
 
+ROOT = Path(__file__).resolve().parent.parent
+
 @dataclass
 class Config:
     
     # Data
-    data_dir:           str = "./data"    
-    # data_dir:           str = "./data" #Kaggle
-    train_dir:          str = "./data/final_data/train"
-    val_dir:            str = "./data/final_data/val"
-    test_dir:           str = "./data/cars_test"
+    data_dir:   str = str(ROOT / "data")
+    train_dir:  str = str(ROOT / "data/final_data/train")
+    val_dir:    str = str(ROOT / "data/final_data/val")
+    test_dir:   str = str(ROOT / "data/cars_test")
     num_workers:        int   = 4 
     img_size:           int = 224
     batch_size:         int = 32
@@ -43,11 +44,11 @@ class Config:
     patience:           int   = 7
         
     # Path
-    output_dir:         str   = "../outputs"
-    best_model_path:    str   = "../outputs/best_model.pth"
-    last_model_path:    str   = "../outputs/last_model.pth"
-    history_path:       str   = "../outputs/training_history.json"
-    class_names_path:   str   = "../class_names.json"
+    output_dir:       str = str(ROOT / "outputs")
+    best_model_path:  str = str(ROOT / "outputs/best_model.pth")
+    last_model_path:  str = str(ROOT / "outputs/last_model.pth")
+    history_path:     str = str(ROOT / "outputs/training_history.json")
+    class_names_path: str = str(ROOT / "class_names.json")
     
     seed:               int   = 42
     log_interval:       int   = 50 
