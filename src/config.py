@@ -2,58 +2,60 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import os
 
-ROOT = Path(__file__).resolve().parent.parent
+IS_KAGLLE = os.path.exists('/kaggle/input/datasets/lquanganhtun/car-classification1')
+
+if IS_KAGLLE:
+    DATA_ROOT = Path('/kaggle/input/datasets/lquanganhtun/car-classification1')
+    WORKING_ROOT = Path('/kaggle/working/project')
+    TRAIN_PATH = str(DATA_ROOT / "data/final_data/train")
+    VAL_PATH   = str(DATA_ROOT / "data/final_data/val")
+    TEST_PATH  = str(DATA_ROOT / "data/cars_test")
+    OUT_DIR    = str(WORKING_ROOT / "outputs")
+    CLASS_PATH = str(WORKING_ROOT / "class_names.json")
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    TRAIN_PATH = str(PROJECT_ROOT / "data/final_data/train")
+    VAL_PATH   = str(PROJECT_ROOT / "data/final_data/val")
+    TEST_PATH  = str(PROJECT_ROOT / "data/cars_test")
+    OUT_DIR    = str(PROJECT_ROOT / "outputs")
+    CLASS_PATH = str(PROJECT_ROOT / "class_names.json")
 
 @dataclass
 class Config:
-    
     # Data
-    data_dir:   str = str(ROOT / "data")
-    train_dir:  str = str(ROOT / "data/final_data/train")
-    val_dir:    str = str(ROOT / "data/final_data/val")
-    test_dir:   str = str(ROOT / "data/cars_test")
-    num_workers:        int   = 4 
-    img_size:           int = 224
-    batch_size:         int = 32
-    num_classes:        int = 196
-    val_split:          float = 0.2
+    train_dir:   str = TRAIN_PATH
+    val_dir:     str = VAL_PATH
+    test_dir:    str = TEST_PATH
+    num_workers: int = 0 #4
+    img_size:    int = 448
+    batch_size:  int = 16
+    num_classes: int = 196
+    val_split:   float = 0.2
     
-    # Model
     model_name:         str   = "resnet50"
     pretrained:         bool  = True
-    dropout:            float = 0.4
+    dropout:            float = 0.5
     use_amp:            bool  = True 
+    epoch_phase1:       int   = 5
+    lr_phase1:          float = 1e-3
+    epochs_phase2:      int   = 30
+    lr_head_phase2:     float = 1e-4
+    lr_backbone_phase2: float = 1e-5
     
-    # Phase 1
-    epoch_phase1:       int     = 5
-    lr_phase1:          float   = 1e-3
-    weight_decay:       float   = 1e-4
+    output_dir:       str = OUT_DIR
+    best_model_path:  str = os.path.join(OUT_DIR, "best_model.pth")
+    last_model_path:  str = os.path.join(OUT_DIR, "last_model.pth")
+    history_path:     str = os.path.join(OUT_DIR, "training_history.json")
+    class_names_path: str = CLASS_PATH
     
-    # Phase 2
-    epochs_phase2:      int   = 20
-    lr_head_phase2:     float = 1e-4         
-    lr_backbone_phase2: float = 1e-5      
-    label_smoothing:    float = 0.1 
-    
-    # Scheduler
-    scheduler:          str   = "cosine"   
-    warmup_epochs:      int   = 2   
+    seed:             int = 42
+    log_interval:     int = 50 
+    patience:         int = 7
+    warmup_epochs:    int = 2
+    weight_decay:     float = 1e-4
+    label_smoothing:  float = 0.1
+    scheduler:        str = "cosine"
 
-    # Checkpoint
-    save_top_k:         int   = 1          
-    patience:           int   = 7
-        
-    # Path
-    output_dir:       str = str(ROOT / "outputs")
-    best_model_path:  str = str(ROOT / "outputs/best_model.pth")
-    last_model_path:  str = str(ROOT / "outputs/last_model.pth")
-    history_path:     str = str(ROOT / "outputs/training_history.json")
-    class_names_path: str = str(ROOT / "class_names.json")
-    
-    seed:               int   = 42
-    log_interval:       int   = 50 
-    
-        
 CFG = Config()
 
 

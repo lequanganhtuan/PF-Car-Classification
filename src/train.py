@@ -1,13 +1,14 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+import os
 
 import json
 import time
 from pathlib import Path
 
 from config import CFG
-from dataset import get_dataloaders, load_class_names
+from dataset import get_dataloader, load_class_names
 from model import (
     build_model,
     freeze_backbone,
@@ -144,7 +145,7 @@ def run_phase(
     if phase == 1:
         freeze_backbone(model)
         optimizer = get_optimizer_phase1(model)
-        epochs    = CFG.epochs_phase1
+        epochs    = CFG.epoch_phase1
     else:
         unfreeze_all(model)
         optimizer = get_optimizer_phase2(model)
@@ -223,7 +224,7 @@ def main():
         print(f"[Setup] AMP: {'Enabled' if CFG.use_amp else 'Disabled'}")
 
     # Data
-    train_loader, val_loader = get_dataloaders()
+    train_loader, val_loader, _ = get_dataloader()
 
     # Model
     model = build_model()
@@ -258,51 +259,41 @@ def main():
         phase2_best_val_acc=best_val_acc_p1,
     )
 
-    # ── Final test evaluation ──────────────────────────────────────────────
+    #  Final test evaluation 
     print(f"\n{'=' * 60}")
-    print("  FINAL TEST EVALUATION (best checkpoint)")
+    print("  FINAL EVALUATION (Best Checkpoint)")
     print(f"{'=' * 60}")
 
-    # Load best model để evaluate trên test set
     from model import load_checkpoint
-    checkpoint = load_checkpoint(CFG.best_model_path, model, device)
+    _ = load_checkpoint(CFG.best_model_path, model, device)
 
-    test_loss, test_acc, test_top5 = validate(
-        model, test_loader, criterion, device, epoch=0, split="Test"
+    final_loss, final_acc, final_top5 = validate(
+        model, val_loader, criterion, device, epoch=0, split="Final"
     )
-    print(f"\n  Test Accuracy (Top-1): {test_acc:.2f}%")
-    print(f"  Test Accuracy (Top-5): {test_top5:.2f}%")
-    print(f"  Test Loss:             {test_loss:.4f}")
 
-    # ── Lưu training history ───────────────────────────────────────────────
     history["best_val_acc_phase1"] = round(best_val_acc_p1, 4)
     history["best_val_acc_phase2"] = round(best_val_acc_p2, 4)
-    history["test_acc_top1"]       = round(test_acc, 4)
-    history["test_acc_top5"]       = round(test_top5, 4)
+    history["final_val_acc_top1"]  = round(final_acc, 4)
     history["total_epochs"]        = len(history["train_loss"])
 
     with open(CFG.history_path, "w") as f:
         json.dump(history, f, indent=2)
     print(f"\n[History] Saved to {CFG.history_path}")
 
-    # ── Vẽ training curves ─────────────────────────────────────────────────
     plot_training_curves(
         history_path=CFG.history_path,
-        save_path="outputs/training_curves.png",
+        save_path=os.path.join(CFG.output_dir, "training_curves.png"),
     )
 
-    # ── Tổng kết ───────────────────────────────────────────────────────────
     total_time = time.time() - total_start
     print(f"\n{'=' * 60}")
     print("  TRAINING COMPLETE")
     print(f"{'=' * 60}")
     print(f"  Best Val Acc (Phase 1): {best_val_acc_p1:.2f}%")
     print(f"  Best Val Acc (Phase 2): {best_val_acc_p2:.2f}%")
-    print(f"  Test Acc (Top-1):       {test_acc:.2f}%")
-    print(f"  Test Acc (Top-5):       {test_top5:.2f}%")
+    print(f"  Final Val Acc (Top-1):  {final_acc:.2f}%")
     print(f"  Total Training Time:    {format_time(total_time)}")
-    print(f"  Best checkpoint:        {CFG.best_model_path}")
-
+    
     target_met = "TARGET MET!" if best_val_acc_p2 >= 85.0 else "Below 85% target"
     print(f"\n  {target_met}")
     print(f"{'=' * 60}\n")

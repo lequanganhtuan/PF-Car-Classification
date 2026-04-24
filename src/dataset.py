@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader, Subset
 import torchvision.transforms as T
 from torchvision.datasets import ImageFolder
 
+from PIL import Image
+
 from config import CFG
 
 def get_train_transforms() -> T.Compose:
@@ -46,6 +48,22 @@ def get_val_transform() -> T.Compose:
         ),
     ])
     
+class RawImageFolder(torch.utils.data.Dataset):
+    def __init__(self, root, transform=None):
+        self.root = Path(root)
+        self.transform = transform
+        self.image_files = sorted([f for f in self.root.iterdir() if f.is_file()])
+
+    def __getitem__(self, idx):
+        img_path = self.image_files[idx]
+        img = Image.open(img_path).convert("RGB")
+        if self.transform:
+            img = self.transform(img)
+        return img, str(img_path.name) # Trả về ảnh và tên file (vì chưa có nhãn)
+
+    def __len__(self):
+        return len(self.image_files)
+    
 def get_dataloader() -> Tuple[DataLoader, DataLoader]:
     print("[Dataset] Car Classification")
     
@@ -59,10 +77,19 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
         transform = get_val_transform()
     )
     
-    idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
+    test_dataset = RawImageFolder(
+        root = CFG.test_dir, 
+        transform = get_val_transform()
+    )
     
-    with open(CFG.class_names_path, 'w', encoding='utf-8') as f:
-        json.dump(idx_to_class, f, indent=4)
+    idx_to_class = {v: k for k, v in train_dataset.class_to_idx.items()}
+
+    try:
+        with open(CFG.class_names_path, 'w', encoding='utf-8') as f:
+            json.dump(idx_to_class, f, indent=4)
+        print(f"[INFO] class_names.json saved successfully at: {CFG.class_names_path}")
+    except Exception as e:
+        print(f"[ERROR] Failed to save class_names.json: {e}")
         
         
     train_loader = DataLoader(
@@ -84,12 +111,20 @@ def get_dataloader() -> Tuple[DataLoader, DataLoader]:
         persistent_workers=CFG.num_workers > 0,
     )
     
+    test_loader = DataLoader(
+        test_dataset, 
+        batch_size=CFG.batch_size, 
+        shuffle=False, # Test tuyệt đối không shuffle
+        num_workers=CFG.num_workers,
+        pin_memory=True
+    )
+    
     print(f"[Dataset] Train samples : {len(train_dataset):,}")
     print(f"[Dataset] Val samples   : {len(val_dataset):,}")
     print(f"[Dataset] Train batches : {len(train_loader)}")
     print(f"[Dataset] Val batches   : {len(val_loader)}")
 
-    return train_loader, val_loader
+    return train_loader, val_loader, test_loader
 
 def load_class_names() -> dict:
     with open(CFG.class_names_path, "r", encoding="utf-8") as f:
@@ -103,7 +138,7 @@ if __name__ == "__main__":
     MEAN = np.array([0.485, 0.456, 0.406])
     STD  = np.array([0.229, 0.224, 0.225])
 
-    train_loader, val_loader = get_dataloader()
+    train_loader, val_loader, test_loader = get_dataloader()
 
     images, labels = next(iter(train_loader))
     print(f"\n[Sanity Check]")
