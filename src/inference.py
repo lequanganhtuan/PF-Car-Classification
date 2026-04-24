@@ -247,12 +247,12 @@ def main():
         description="Car Image Classifier — Inference Demo",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  python inference.py --image samples/pizza.jpg
-  python inference.py --image samples/pizza.jpg samples/sushi.jpg --top-k 10
-  python inference.py --image samples/burger.jpg --checkpoint outputs/last_model.pth
-        """,
-    )
+    Examples:
+    python inference.py --image samples/pizza.jpg
+    python inference.py --image samples/pizza.jpg samples/sushi.jpg --top-k 10
+    python inference.py --image samples/burger.jpg --checkpoint outputs/last_model.pth
+            """,
+        )
     parser.add_argument(
         "--image",
         nargs="+",
